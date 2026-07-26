@@ -89,7 +89,9 @@ if (shopify) {
 app.get('/api/health', (req, res) => res.send('ok'));
 
 // Storefront app proxy
-app.use('/apps/eu-suite', require('./routes/proxy'));
+const proxyRoutes = require('./routes/proxy');
+app.use('/apps/eu-suite', proxyRoutes);
+app.use('/storefront', proxyRoutes);
 
 // Admin API
 app.use('/api', adminAuth(shopify), require('./routes/admin'));
