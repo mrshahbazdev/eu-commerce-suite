@@ -11,10 +11,10 @@ redirect_urls = [
 ]
 
 [webhooks]
-api_version = "2024-07"
+api_version = "2026-07"
 
 [app_proxy]
-url = "https://greencomply.jobspic.com/storefront"
+url = "https://greencomply.jobspic.com/apps/eu-suite"
 subpath = "eu-suite"
 prefix = "apps"
 
