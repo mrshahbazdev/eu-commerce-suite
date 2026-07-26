@@ -4,7 +4,6 @@ application_url = "https://greencomply.jobspic.com"
 embedded = false
 
 [build]
-include_config_on_deploy = true
 
 [auth]
 redirect_urls = [

@@ -1,0 +1,13 @@
+{
+  "cookie_banner": {
+    "title": "We value your privacy",
+    "text": "This website uses cookies to ensure you get the best experience."
+  },
+  "age_verification": {
+    "title": "Age Verification",
+    "text": "You must be 18 or older to enter."
+  },
+  "carbon_badge": {
+    "label": "kg CO2e"
+  }
+}
