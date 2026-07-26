@@ -1,0 +1,21 @@
+{
+  "name": "eu-commerce-suite",
+  "version": "1.0.0",
+  "description": "EU Trust & Green Commerce Suite for Shopify",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "NODE_ENV=development node server.js",
+    "test": "echo 'No tests yet' && exit 1"
+  },
+  "keywords": ["shopify", "gdpr", "cookie", "carbon", "eu", "compliance", "sustainability"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@shopify/shopify-api": "^13.1.0",
+    "@shopify/shopify-app-express": "^7.0.1",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "mysql2": "^3.23.1"
+  }
+}

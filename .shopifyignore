@@ -1,0 +1,5 @@
+*.md
+.env
+.env.example
+data/
+node_modules/

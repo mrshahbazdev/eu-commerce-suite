@@ -1,0 +1,18 @@
+<div class="ec-suite-block" data-ec-block="consent" data-shop="{{ shop.permanent_domain }}" data-proxy-url="{{ shop.url }}/apps/eu-suite" style="display:none"></div>
+<script>
+(function(){
+  var b = document.querySelector('[data-ec-block="consent"]');
+  if(!b) return;
+  var proxy = b.dataset.proxyUrl || '/apps/eu-suite';
+  fetch(proxy + '/consent-banner?shop=' + encodeURIComponent(b.dataset.shop))
+    .then(r => r.text())
+    .then(html => { var d = document.createElement('div'); d.innerHTML = html; var s = d.querySelector('script'); if(s){ var ns=document.createElement('script'); ns.textContent=s.textContent; document.head.appendChild(ns); } document.body.appendChild(d.firstElementChild); window.ecShop=b.dataset.shop; });
+})();
+</script>
+{% schema %}
+{
+  "name": "EU Cookie Banner",
+  "target": "body",
+  "settings": []
+}
+{% endschema %}

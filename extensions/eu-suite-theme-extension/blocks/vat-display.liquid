@@ -1,0 +1,19 @@
+{% assign price_value = product.selected_or_first_available_variant.price | money_without_currency | replace: ',', '.' %}
+<div class="ec-suite-block" data-ec-block="vat" data-shop="{{ shop.permanent_domain }}" data-proxy-url="{{ shop.url }}/apps/eu-suite" data-price="{{ price_value }}"></div>
+<script>
+(function(){
+  var b = document.querySelector('[data-ec-block="vat"]');
+  if(!b) return;
+  var proxy = b.dataset.proxyUrl || '/apps/eu-suite';
+  fetch(proxy + '/vat-display?shop=' + encodeURIComponent(b.dataset.shop) + '&price=' + encodeURIComponent(b.dataset.price || ''))
+    .then(r => r.text())
+    .then(html => { b.innerHTML = html; });
+})();
+</script>
+{% schema %}
+{
+  "name": "EU VAT Display",
+  "target": "section",
+  "settings": []
+}
+{% endschema %}

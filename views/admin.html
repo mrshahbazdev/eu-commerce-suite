@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EU Trust & Green Commerce Suite</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>body{font-family:'Inter',sans-serif;}</style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+<div class="min-h-screen flex">
+  <aside class="w-64 bg-slate-900 text-slate-300 hidden md:flex flex-col">
+    <div class="h-16 flex items-center px-6 border-b border-slate-800">
+      <span class="text-white font-bold text-lg">EU Suite</span>
+    </div>
+    <nav class="flex-1 py-4 space-y-1" id="nav"></nav>
+    <div class="p-4 border-t border-slate-800 text-xs text-slate-500">v1.0.0</div>
+  </aside>
+
+  <main class="flex-1 flex flex-col">
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6">
+      <h1 id="pageTitle" class="text-xl font-bold text-slate-900">Dashboard</h1>
+      <div class="text-sm text-slate-500" id="shopLabel"></div>
+    </header>
+    <div id="toast" class="hidden fixed top-4 right-4 bg-emerald-600 text-white px-4 py-2 rounded-lg shadow-lg z-50"></div>
+    <div id="content" class="p-6 overflow-auto flex-1">
+      <div id="dashboard" class="space-y-6"></div>
+    </div>
+  </main>
+</div>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const shop = params.get('shop') || '';
+const qs = window.location.search;
+document.getElementById('shopLabel').textContent = shop;
+
+function qsAppend(path){ const sep=path.includes('?')?'&':'?'; return path+sep+qs.slice(1); }
+async function api(path, opts={}){
+  const url=qsAppend('/api'+path);
+  const res=await fetch(url,{headers:{'Content-Type':'application/json'},...opts});
+  if(!res.ok){ const t=await res.text(); throw new Error(t); }
+  return res.json();
+}
+function toast(msg){ const el=document.getElementById('toast'); el.textContent=msg; el.classList.remove('hidden'); setTimeout(()=>el.classList.add('hidden'),3000); }
+function fmtDate(d){ return d ? new Date(d).toLocaleString() : '-'; }
+
+const navItems=[
+  {id:'dashboard',label:'Dashboard',icon:'🏠'},
+  {id:'consent',label:'Cookie Consent',icon:'🍪'},
+  {id:'datarequests',label:'GDPR Data Requests',icon:'📋'},
+  {id:'legal',label:'Legal Pages',icon:'📄'},
+  {id:'age',label:'Age Verification',icon:'🔞'},
+  {id:'vat',label:'VAT / IOSS',icon:'€'},
+  {id:'carbon',label:'Carbon Offset',icon:'🌱'},
+  {id:'couriers',label:'Green Couriers',icon:'🚚'},
+  {id:'reports',label:'Sustainability Reports',icon:'📊'},
+  {id:'scans',label:'Cookie Scanner',icon:'🔍'},
+];
+
+const navEl=document.getElementById('nav');
+navItems.forEach(item=>{
+  const a=document.createElement('button');
+  a.className='w-full text-left px-6 py-2.5 hover:bg-slate-800 hover:text-white flex items-center gap-3 text-sm font-medium';
+  a.innerHTML=`<span>${item.icon}</span>${item.label}`;
+  a.onclick=()=>showSection(item.id);
+  a.id='nav-'+item.id;
+  navEl.appendChild(a);
+});
+
+let current='dashboard';
+function showSection(id){
+  current=id;
+  document.querySelectorAll('#nav button').forEach(b=>b.classList.remove('bg-emerald-600','text-white'));
+  document.getElementById('nav-'+id).classList.add('bg-emerald-600','text-white');
+  document.getElementById('pageTitle').textContent=navItems.find(i=>i.id===id).label;
+  renderSection(id);
+}
+
+const content=document.getElementById('content');
+function renderSection(id){
+  content.innerHTML='<div class="flex items-center justify-center h-40"><div class="animate-spin h-8 w-8 border-4 border-emerald-500 border-t-transparent rounded-full"></div></div>';
+  if(id==='dashboard') renderDashboard();
+  if(id==='consent') renderConsent();
+  if(id==='datarequests') renderDataRequests();
+  if(id==='legal') renderLegal();
+  if(id==='age') renderAge();
+  if(id==='vat') renderVat();
+  if(id==='carbon') renderCarbon();
+  if(id==='couriers') renderCouriers();
+  if(id==='reports') renderReports();
+  if(id==='scans') renderScans();
+}
+
+function card(title, body){
+  return `<div class="bg-white rounded-xl border border-slate-200 shadow-sm"><div class="px-6 py-4 border-b border-slate-100 font-semibold text-slate-800">${title}</div><div class="p-6">${body}</div></div>`;
+}
+
+function input(label, id, type='text', val=''){
+  return `<label class="block text-sm font-medium text-slate-700 mb-1">${label}</label><input id="${id}" type="${type}" class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500" value="${val||''}">`;
+}
+function textarea(label, id, val=''){
+  return `<label class="block text-sm font-medium text-slate-700 mb-1">${label}</label><textarea id="${id}" rows="6" class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500">${val||''}</textarea>`;
+}
+function btnPrimary(text, onclick){ return `<button onclick="${onclick}" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 rounded-lg text-sm">${text}</button>`; }
+
+async function renderDashboard(){
+  const [consent, requests, carbon, reports] = await Promise.all([
+    api('/consent-logs?limit=5').catch(()=>({logs:[]})),
+    api('/data-requests').catch(()=>({requests:[]})),
+    api('/carbon-orders').catch(()=>({orders:[]})),
+    api('/sustainability-reports').catch(()=>({reports:[]}))
+  ]);
+  const offsets = carbon.orders.reduce((s,o)=>s+(parseFloat(o.offset_amount)||0),0);
+  const kg = carbon.orders.reduce((s,o)=>s+(parseFloat(o.kg_co2)||0),0);
+  content.innerHTML = `
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div class="bg-emerald-600 text-white p-5 rounded-xl"><div class="text-3xl font-bold">${consent.logs.length}</div><div class="text-sm opacity-90">Recent consents</div></div>
+      <div class="bg-blue-600 text-white p-5 rounded-xl"><div class="text-3xl font-bold">${requests.requests.length}</div><div class="text-sm opacity-90">Data requests</div></div>
+      <div class="bg-amber-600 text-white p-5 rounded-xl"><div class="text-3xl font-bold">${carbon.orders.length}</div><div class="text-sm opacity-90">Carbon offsets</div></div>
+      <div class="bg-slate-800 text-white p-5 rounded-xl"><div class="text-3xl font-bold">${kg.toFixed(2)} kg</div><div class="text-sm opacity-90">CO2e offset</div></div>
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      ${card('Latest consents', `<ul class="divide-y divide-slate-100">${(consent.logs||[]).slice(0,5).map(l=>`<li class="py-2 text-sm"><span class="font-medium">${l.customer_id||'guest'}</span> · ${Object.entries(l.categories||{}).map(([k,v])=>k+':'+v).join(', ')} · ${fmtDate(l.created_at)}</li>`).join('')}</ul>`)}
+      ${card('Pending data requests', `<ul class="divide-y divide-slate-100">${(requests.requests||[]).filter(r=>r.status==='pending').slice(0,5).map(r=>`<li class="py-2 text-sm"><span class="font-medium">${r.email}</span> · ${r.type} · ${fmtDate(r.created_at)}</li>`).join('')}</ul>`)}
+    </div>`;
+}
+
+async function renderConsent(){
+  const settings = await api('/settings');
+  const banner = settings.consent_banner || {};
+  content.innerHTML = card('Cookie consent banner', `
+    <div class="space-y-4 max-w-2xl">
+      ${input('Banner title','cb-title','text',banner.title)}
+      ${textarea('Banner text','cb-text',banner.text)}
+      <div class="flex gap-2">${btnPrimary('Save settings','saveConsentSettings()')} ${btnPrimary('View consent logs','loadConsentLogs()')}</div>
+    </div>
+    <div id="consent-logs" class="mt-6"></div>
+  `);
+  window.saveConsentSettings = async ()=>{
+    settings.consent_banner = { title: document.getElementById('cb-title').value, text: document.getElementById('cb-text').value };
+    await api('/settings',{method:'POST',body:JSON.stringify(settings)}); toast('Saved');
+  };
+  window.loadConsentLogs = async ()=>{
+    const data = await api('/consent-logs');
+    document.getElementById('consent-logs').innerHTML = `<h3 class="font-semibold mb-2">Recent consent logs</h3><div class="overflow-x-auto"><table class="min-w-full text-sm"><thead class="bg-slate-100"><tr><th class="px-3 py-2 text-left">Customer</th><th class="px-3 py-2 text-left">Categories</th><th class="px-3 py-2 text-left">Time</th></tr></thead><tbody class="divide-y divide-slate-100">${(data.logs||[]).map(l=>`<tr><td class="px-3 py-2">${l.customer_id||'guest'}</td><td class="px-3 py-2">${JSON.stringify(l.categories)}</td><td class="px-3 py-2">${fmtDate(l.created_at)}</td></tr>`).join('')}</tbody></table></div>`;
+  };
+}
+
+async function renderDataRequests(){
+  const data = await api('/data-requests');
+  content.innerHTML = card('GDPR data requests', `
+    <form onsubmit="submitDataRequest(event)" class="space-y-3 max-w-xl mb-6">
+      ${input('Customer email','dr-email','email')}
+      <label class="block text-sm font-medium text-slate-700 mb-1">Type</label>
+      <select id="dr-type" class="w-full border border-slate-300 rounded-lg px-3 py-2"><option value="export">Export data</option><option value="delete">Delete data</option></select>
+      <div>${btnPrimary('Create request','document.getElementById(\'dr-submit\').click()')}</div>
+      <button id="dr-submit" type="submit" class="hidden"></button>
+    </form>
+    <div class="overflow-x-auto"><table class="min-w-full text-sm"><thead class="bg-slate-100"><tr><th class="px-3 py-2 text-left">Email</th><th class="px-3 py-2 text-left">Type</th><th class="px-3 py-2 text-left">Status</th><th class="px-3 py-2 text-left">Created</th></tr></thead><tbody class="divide-y divide-slate-100">${(data.requests||[]).map(r=>`<tr><td class="px-3 py-2">${r.email}</td><td class="px-3 py-2">${r.type}</td><td class="px-3 py-2"><span class="px-2 py-0.5 rounded-full text-xs ${r.status==='pending'?'bg-amber-100 text-amber-700':r.status==='completed'?'bg-emerald-100 text-emerald-700':'bg-slate-100 text-slate-600'}">${r.status}</span></td><td class="px-3 py-2">${fmtDate(r.created_at)}</td></tr>`).join('')}</tbody></table></div>
+  `);
+  window.submitDataRequest = async (e)=>{
+    e.preventDefault();
+    const email=document.getElementById('dr-email').value; const type=document.getElementById('dr-type').value;
+    await api('/data-requests',{method:'POST',body:JSON.stringify({email,type})}); toast('Request created'); renderDataRequests();
+  };
+}
+
+async function renderLegal(){
+  const data = await api('/legal-pages');
+  content.innerHTML = card('Legal pages generator', `
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      ${input('Company name','lp-company','text',data.company)}
+      ${input('Address','lp-address','text',data.address)}
+      ${input('Contact email','lp-email','email',data.email)}
+      ${input('Website URL','lp-url','url',data.url)}
+    </div>
+    <div class="flex gap-2 mb-4">${btnPrimary('Generate all legal pages','generateLegal()')} ${btnPrimary('Save pages','saveLegal()')}</div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      ${textarea('Privacy Policy','pp-text',data.privacy_policy)}
+      ${textarea('Terms & Conditions','terms-text',data.terms)}
+      ${textarea('Impressum','impressum-text',data.impressum)}
+      ${textarea('Widerrufsbelehrung','widerruf-text',data.widerruf)}
+      ${textarea('AGB','agb-text',data.agb)}
+    </div>
+  `);
+  window.generateLegal = async ()=>{
+    const company=document.getElementById('lp-company').value; const address=document.getElementById('lp-address').value; const email=document.getElementById('lp-email').value; const url=document.getElementById('lp-url').value;
+    const res = await api('/generate-legal-pages',{method:'POST',body:JSON.stringify({company,address,email,url})});
+    document.getElementById('pp-text').value=res.privacy_policy;
+    document.getElementById('terms-text').value=res.terms;
+    document.getElementById('impressum-text').value=res.impressum;
+    document.getElementById('widerruf-text').value=res.widerruf;
+    document.getElementById('agb-text').value=res.agb;
+    toast('Generated');
+  };
+  window.saveLegal = async ()=>{
+    await api('/legal-pages',{method:'POST',body:JSON.stringify({
+      privacy_policy:document.getElementById('pp-text').value,
+      terms:document.getElementById('terms-text').value,
+      impressum:document.getElementById('impressum-text').value,
+      widerruf:document.getElementById('widerruf-text').value,
+      agb:document.getElementById('agb-text').value
+    })}); toast('Saved');
+  };
+}
+
+async function renderAge(){
+  const settings = await api('/settings');
+  const av = settings.age_verification || {};
+  content.innerHTML = card('Age verification', `
+    <div class="space-y-4 max-w-xl">
+      ${input('Title','av-title','text',av.title)}
+      ${textarea('Text','av-text',av.text)}
+      <div>${btnPrimary('Save settings','saveAgeSettings()')} ${btnPrimary('View logs','loadAgeLogs()')}</div>
+    </div>
+    <div id="age-logs" class="mt-6"></div>
+  `);
+  window.saveAgeSettings = async ()=>{
+    settings.age_verification = { title: document.getElementById('av-title').value, text: document.getElementById('av-text').value };
+    await api('/settings',{method:'POST',body:JSON.stringify(settings)}); toast('Saved');
+  };
+  window.loadAgeLogs = async ()=>{
+    const data = await api('/age-verifications');
+    document.getElementById('age-logs').innerHTML = `<h3 class="font-semibold mb-2">Verification logs</h3><table class="min-w-full text-sm"><thead class="bg-slate-100"><tr><th class="px-3 py-2 text-left">Customer</th><th class="px-3 py-2 text-left">DOB</th><th class="px-3 py-2 text-left">Time</th></tr></thead><tbody class="divide-y divide-slate-100">${(data.logs||[]).map(l=>`<tr><td class="px-3 py-2">${l.customer_id||'guest'}</td><td class="px-3 py-2">${l.dob}</td><td class="px-3 py-2">${fmtDate(l.created_at)}</td></tr>`).join('')}</tbody></table>`;
+  };
+}
+
+async function renderVat(){
+  const data = await api('/vat-settings');
+  content.innerHTML = card('VAT / IOSS settings', `
+    <form onsubmit="saveVat(event)" class="space-y-4 max-w-xl">
+      <label class="flex items-center gap-2"><input type="checkbox" id="vat-enabled" ${data.enabled?'checked':''} class="w-4 h-4 text-emerald-600"> Enabled</label>
+      ${input('IOSS number','vat-ioss','text',data.io_ss_number)}
+      ${input('Default VAT rate (%)','vat-rate','number',data.default_rate)}
+      ${input('Display label','vat-label','text',data.display_label)}
+      <div>${btnPrimary('Save VAT settings','document.getElementById(\'vat-submit\').click()')}</div>
+      <button id="vat-submit" type="submit" class="hidden"></button>
+    </form>
+  `);
+  window.saveVat = async (e)=>{
+    e.preventDefault();
+    await api('/vat-settings',{method:'POST',body:JSON.stringify({
+      enabled: document.getElementById('vat-enabled').checked,
+      io_ss_number: document.getElementById('vat-ioss').value,
+      default_rate: parseFloat(document.getElementById('vat-rate').value) || 19,
+      display_label: document.getElementById('vat-label').value
+    })}); toast('Saved');
+  };
+}
+
+async function renderCarbon(){
+  const data = await api('/carbon-settings');
+  const orders = await api('/carbon-orders');
+  content.innerHTML = card('Carbon offset settings', `
+    <form onsubmit="saveCarbon(event)" class="space-y-4 max-w-xl">
+      <label class="flex items-center gap-2"><input type="checkbox" id="carbon-enabled" ${data.enabled?'checked':''} class="w-4 h-4 text-emerald-600"> Enable carbon offset upsell</label>
+      ${input('Default kg CO2 per order','carbon-kg','number',data.kg_co2_per_order)}
+      ${input('Factor per kg','carbon-factor','number',data.per_kg_factor)}
+      ${input('Offset rate per kg','carbon-rate','number',data.offset_rate_per_kg)}
+      ${input('Currency','carbon-currency','text',data.currency)}
+      ${input('Label text','carbon-label','text',data.label)}
+      <div>${btnPrimary('Save carbon settings','document.getElementById(\'carbon-submit\').click()')}</div>
+      <button id="carbon-submit" type="submit" class="hidden"></button>
+    </form>
+    <h3 class="font-semibold mt-6 mb-2">Offset orders</h3>
+    <table class="min-w-full text-sm"><thead class="bg-slate-100"><tr><th class="px-3 py-2 text-left">Order</th><th class="px-3 py-2 text-left">kg CO2</th><th class="px-3 py-2 text-left">Offset</th><th class="px-3 py-2 text-left">Status</th></tr></thead><tbody class="divide-y divide-slate-100">${(orders.orders||[]).map(o=>`<tr><td class="px-3 py-2">${o.order_id||'-'}</td><td class="px-3 py-2">${o.kg_co2}</td><td class="px-3 py-2">${o.offset_amount} ${o.currency}</td><td class="px-3 py-2">${o.status}</td></tr>`).join('')}</tbody></table>
+  `);
+  window.saveCarbon = async (e)=>{
+    e.preventDefault();
+    await api('/carbon-settings',{method:'POST',body:JSON.stringify({
+      enabled: document.getElementById('carbon-enabled').checked,
+      kg_co2_per_order: parseFloat(document.getElementById('carbon-kg').value) || 2.5,
+      per_kg_factor: parseFloat(document.getElementById('carbon-factor').value) || 0.5,
+      offset_rate_per_kg: parseFloat(document.getElementById('carbon-rate').value) || 0.12,
+      currency: document.getElementById('carbon-currency').value || 'EUR',
+      label: document.getElementById('carbon-label').value || 'Make it carbon neutral'
+    })}); toast('Saved');
+  };
+}
+
+async function renderCouriers(){
+  const data = await api('/courier-settings');
+  content.innerHTML = card('Green courier integrations', `
+    <form onsubmit="saveCouriers(event)" class="space-y-4 max-w-xl">
+      <label class="flex items-center gap-2"><input type="checkbox" id="courier-enabled" ${data.enabled?'checked':''} class="w-4 h-4 text-emerald-600"> Enable green courier options</label>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <label class="flex items-center gap-2"><input type="checkbox" id="dpd-enabled" ${data.dpd_enabled?'checked':''}> DPD</label>
+        <label class="flex items-center gap-2"><input type="checkbox" id="gls-enabled" ${data.gls_enabled?'checked':''}> GLS</label>
+        <label class="flex items-center gap-2"><input type="checkbox" id="dhl-enabled" ${data.dhl_enabled?'checked':''}> DHL GoGreen</label>
+      </div>
+      ${input('DPD API key','dpd-key','text',data.dpd_api_key)}
+      ${input('GLS API key','gls-key','text',data.gls_api_key)}
+      ${input('DHL API key','dhl-key','text',data.dhl_api_key)}
+      <div>${btnPrimary('Save courier settings','document.getElementById(\'courier-submit\').click()')}</div>
+      <button id="courier-submit" type="submit" class="hidden"></button>
+    </form>
+    <p class="text-sm text-slate-500 mt-4">Live label generation requires real carrier API credentials and account contracts. The quote endpoint returns simulated pricing for testing.</p>
+  `);
+  window.saveCouriers = async (e)=>{
+    e.preventDefault();
+    await api('/courier-settings',{method:'POST',body:JSON.stringify({
+      enabled: document.getElementById('courier-enabled').checked,
+      dpd_enabled: document.getElementById('dpd-enabled').checked,
+      gls_enabled: document.getElementById('gls-enabled').checked,
+      dhl_enabled: document.getElementById('dhl-enabled').checked,
+      dpd_api_key: document.getElementById('dpd-key').value,
+      gls_api_key: document.getElementById('gls-key').value,
+      dhl_api_key: document.getElementById('dhl-key').value
+    })}); toast('Saved');
+  };
+}
+
+async function renderReports(){
+  const data = await api('/sustainability-reports');
+  content.innerHTML = card('Sustainability reports', `
+    <form onsubmit="createReport(event)" class="space-y-3 max-w-xl mb-6">
+      <div class="grid grid-cols-2 gap-4">${input('Period start','rp-start','date')} ${input('Period end','rp-end','date')}</div>
+      <div>${btnPrimary('Generate report','document.getElementById(\'rp-submit\').click()')}</div>
+      <button id="rp-submit" type="submit" class="hidden"></button>
+    </form>
+    <table class="min-w-full text-sm"><thead class="bg-slate-100"><tr><th class="px-3 py-2 text-left">Period</th><th class="px-3 py-2 text-left">kg CO2 offset</th><th class="px-3 py-2 text-left">Offsets sold</th><th class="px-3 py-2 text-left">Created</th></tr></thead><tbody class="divide-y divide-slate-100">${(data.reports||[]).map(r=>`<tr><td class="px-3 py-2">${r.period_start} - ${r.period_end}</td><td class="px-3 py-2">${r.kg_co2_offset}</td><td class="px-3 py-2">${r.offsets_sold}</td><td class="px-3 py-2">${fmtDate(r.created_at)}</td></tr>`).join('')}</tbody></table>
+  `);
+  window.createReport = async (e)=>{
+    e.preventDefault();
+    await api('/sustainability-reports',{method:'POST',body:JSON.stringify({period_start:document.getElementById('rp-start').value, period_end:document.getElementById('rp-end').value})});
+    toast('Report generated'); renderReports();
+  };
+}
+
+async function renderScans(){
+  content.innerHTML = card('Cookie scanner', `
+    <form onsubmit="runScan(event)" class="space-y-3 max-w-xl mb-6">
+      ${input('Website URL to scan','scan-url','url')}
+      <div>${btnPrimary('Scan cookies','document.getElementById(\'scan-submit\').click()')}</div>
+      <button id="scan-submit" type="submit" class="hidden"></button>
+    </form>
+    <div id="scan-results"></div>
+  `);
+  window.runScan = async (e)=>{
+    e.preventDefault();
+    const url=document.getElementById('scan-url').value;
+    if(!url) return;
+    const res = await api('/cookie-scan',{method:'POST',body:JSON.stringify({url})});
+    const cookies = res.cookies || [];
+    document.getElementById('scan-results').innerHTML = `<h3 class="font-semibold mb-2">Cookies detected on ${url}</h3><div class="overflow-x-auto"><table class="min-w-full text-sm"><thead class="bg-slate-100"><tr><th class="px-3 py-2 text-left">Name</th><th class="px-3 py-2 text-left">Category</th></tr></thead><tbody class="divide-y divide-slate-100">${cookies.map(c=>`<tr><td class="px-3 py-2 font-mono">${c.name}</td><td class="px-3 py-2"><span class="px-2 py-0.5 rounded-full text-xs ${c.category==='necessary'?'bg-emerald-100 text-emerald-700':c.category==='analytics'?'bg-blue-100 text-blue-700':c.category==='marketing'?'bg-rose-100 text-rose-700':'bg-slate-100 text-slate-600'}">${c.category}</span></td></tr>`).join('')}</tbody></table></div>`;
+  };
+}
+
+showSection('dashboard');
+</script>
+</body>
+</html>

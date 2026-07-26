@@ -1,0 +1,19 @@
+{% assign weight = product.weight | default: 0 %}
+<div class="ec-suite-block" data-ec-block="carbon" data-shop="{{ shop.permanent_domain }}" data-proxy-url="{{ shop.url }}/apps/eu-suite" data-weight="{{ weight }}"></div>
+<script>
+(function(){
+  var b = document.querySelector('[data-ec-block="carbon"]');
+  if(!b) return;
+  var proxy = b.dataset.proxyUrl || '/apps/eu-suite';
+  fetch(proxy + '/carbon-badge?shop=' + encodeURIComponent(b.dataset.shop) + '&weight=' + encodeURIComponent(b.dataset.weight || ''))
+    .then(r => r.text())
+    .then(html => { b.innerHTML = html; });
+})();
+</script>
+{% schema %}
+{
+  "name": "Carbon Footprint Badge",
+  "target": "section",
+  "settings": []
+}
+{% endschema %}
