@@ -12,11 +12,11 @@ const SHOPIFY_API_KEY = process.env.SHOPIFY_API_KEY || '';
 const SHOPIFY_API_SECRET = process.env.SHOPIFY_API_SECRET || '';
 const SCOPES = (process.env.SCOPES || 'read_products,write_products,read_orders,write_orders,read_customers,write_customers').split(',');
 
-function log(msg) { console.log(`${new Date().toISOString()} [INFO] ${msg}`); }
-function errLog(msg) { console.error(`${new Date().toISOString()} [ERROR] ${msg}`); }
+function log(msg) { const line=`${new Date().toISOString()} [INFO] ${msg}`; console.log(line); addLog(line); }
+function errLog(msg) { const line=`${new Date().toISOString()} [ERROR] ${msg}`; console.error(line); addLog(line); }
 
 const recentLogs = [];
-function addLog(msg) { recentLogs.push(`${new Date().toISOString()} ${msg}`); if (recentLogs.length > 500) recentLogs.shift(); }
+function addLog(msg) { recentLogs.push(msg); if (recentLogs.length > 500) recentLogs.shift(); }
 function getRecent(lines = 200) { return recentLogs.slice(-lines).join('\n'); }
 
 function hmacCheck(req, res, next) {
@@ -78,6 +78,7 @@ async function adminAuth(req, res, next) {
 
 const app = express();
 if (shopify) app.set('shopify', shopify);
+app.use((req, res, next) => { addLog(`${req.method} ${req.url}`); next(); });
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.set('views', path.join(__dirname, 'views'));
