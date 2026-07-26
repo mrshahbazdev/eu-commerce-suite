@@ -1,6 +1,6 @@
 name = "GreenComply EU"
-client_id = "YOUR_CLIENT_ID"
-application_url = "https://your-app-domain.com"
+client_id = "73383cd5508ddf57dec21cf62a6b8de0"
+application_url = "https://greencomply.jobspic.com"
 embedded = false
 
 [build]
@@ -8,14 +8,14 @@ include_config_on_deploy = true
 
 [auth]
 redirect_urls = [
-  "https://your-app-domain.com/api/auth/callback"
+  "https://greencomply.jobspic.com/api/auth/callback"
 ]
 
 [webhooks]
 api_version = "2024-07"
 
 [app_proxy]
-url = "https://your-app-domain.com/storefront"
+url = "https://greencomply.jobspic.com/storefront"
 subpath = "eu-suite"
 prefix = "apps"
 
