@@ -95,7 +95,7 @@ app.use('/apps/eu-suite', require('./routes/proxy'));
 app.use('/api', adminAuth(shopify), require('./routes/admin'));
 
 if (shopify) {
-  app.get('/', shopify.ensureInstalledOnShop(), async (req, res) => {
+  app.get('/', shopify.validateAuthenticatedSession(), async (req, res) => {
     const { shop } = req.query;
     log('Admin load ' + JSON.stringify({ shop }));
     try {
