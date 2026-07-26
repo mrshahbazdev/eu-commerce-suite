@@ -39,17 +39,16 @@ const write = (p, data) => fs.writeFileSync(p, JSON.stringify(data, null, 2));
 
 const tables = {
   settings: fileFor('settings'),
-  cookieConsents: fileFor('cookie_consents'),
-  dataRequests: fileFor('data_requests'),
+  consent_logs: fileFor('consent_logs'),
+  data_requests: fileFor('data_requests'),
   legalPages: fileFor('legal_pages'),
-  ageVerifications: fileFor('age_verifications'),
-  vatSettings: fileFor('vat_settings'),
-  carbonSettings: fileFor('carbon_settings'),
-  carbonOrders: fileFor('carbon_orders'),
-  courierSettings: fileFor('courier_settings'),
-  sustainabilityReports: fileFor('sustainability_reports'),
-  cookieScanResults: fileFor('cookie_scan_results'),
-  consentLogs: fileFor('consent_logs'),
+  age_verifications: fileFor('age_verifications'),
+  vat_settings: fileFor('vat_settings'),
+  carbon_settings: fileFor('carbon_settings'),
+  carbon_orders: fileFor('carbon_orders'),
+  courier_settings: fileFor('courier_settings'),
+  sustainability_reports: fileFor('sustainability_reports'),
+  cookie_scan_results: fileFor('cookie_scan_results'),
 };
 
 jsonDb = {
@@ -243,9 +242,10 @@ const db = {
   },
 
   getConsentLogs: async (shop, { limit = 50 } = {}) => {
+    if (!shop) return [];
     if (!pool) return jsonDb.read('consent_logs').filter(r => r.shop === shop).slice(0, limit);
-    const [rows] = await pool.execute('SELECT * FROM consent_logs WHERE shop = ? ORDER BY created_at DESC LIMIT ?', [shop, limit]);
-    return rows.map(r => ({ ...r, categories: JSON.parse(r.categories || '{}') }));
+    const [rows] = await pool.execute('SELECT * FROM consent_logs WHERE shop = ? ORDER BY created_at DESC', [shop]);
+    return rows.slice(0, limit).map(r => ({ ...r, categories: JSON.parse(r.categories || '{}') }));
   },
 
   createDataRequest: async (shop, { email, type }) => {
