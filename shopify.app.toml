@@ -1,4 +1,4 @@
-name = "EU Trust & Green Commerce Suite"
+name = "GreenComply EU"
 client_id = "YOUR_CLIENT_ID"
 application_url = "https://your-app-domain.com"
 embedded = false

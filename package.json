@@ -1,7 +1,7 @@
 {
   "name": "eu-commerce-suite",
   "version": "1.0.0",
-  "description": "EU Trust & Green Commerce Suite for Shopify",
+  "description": "GreenComply EU for Shopify",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

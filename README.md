@@ -1,4 +1,4 @@
-# EU Trust & Green Commerce Suite
+# GreenComply EU
 
 All-in-one Shopify app for EU compliance and sustainability:
 

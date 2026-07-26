@@ -1,7 +1,7 @@
-# EU Trust & Green Commerce Suite — App Store listing
+# GreenComply EU — App Store listing
 
 ## App name
-EU Trust & Green Commerce Suite
+GreenComply EU
 
 ## Subtitle
 GDPR compliance, cookie consent, age verification, VAT/IOSS and carbon-neutral shipping in one app.
