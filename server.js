@@ -17,6 +17,11 @@ const recentLogs = [];
 function addLog(msg) { recentLogs.push(`${new Date().toISOString()} ${msg}`); if (recentLogs.length > 500) recentLogs.shift(); }
 function getRecent(lines = 200) { return recentLogs.slice(-lines).join('\n'); }
 
+const origLog = console.log;
+const origErr = console.error;
+console.log = (...args) => { const line = args.join(' '); addLog('[LOG] ' + line); origLog.apply(console, args); };
+console.error = (...args) => { const line = args.join(' '); addLog('[ERR] ' + line); origErr.apply(console, args); };
+
 let shopify = null;
 const hasShopifyCreds = process.env.SHOPIFY_API_KEY && process.env.SHOPIFY_API_SECRET;
 if (hasShopifyCreds) {
@@ -29,6 +34,7 @@ if (hasShopifyCreds) {
         scopes: (process.env.SCOPES || 'read_products,write_products,read_orders,write_orders,read_customers,write_customers').split(','),
         hostScheme: process.env.NODE_ENV === 'development' ? 'http' : 'https',
         hostName: process.env.HOST || `localhost:${PORT}`,
+        isEmbeddedApp: false,
         isCustomStoreApp: false,
       },
       auth: {
